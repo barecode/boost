@@ -32,8 +32,8 @@ public abstract class SpringDockerizer extends Dockerizer {
 
     protected final String springBootVersion = MavenProjectUtil.findSpringBootVersion(project);
 
-    public SpringDockerizer(MavenProject project, File appArchive, Log log) {
-        super(project, appArchive, log);
+    public SpringDockerizer(MavenProject project, File appArchive, Log log, String fromJVM) {
+        super(project, appArchive, log, fromJVM);
     }
 
     /**

@@ -37,13 +37,15 @@ public abstract class Dockerizer {
 	protected final File outputDirectory;
 	protected final File appArchive;
 	protected final Log log;
+	protected final String fromJVM;
 
-	public Dockerizer(MavenProject project, File appArchive, Log log) {
+	public Dockerizer(MavenProject project, File appArchive, Log log, String fromJVM) {
 		this.project = project;
 		this.projectDirectory = project.getBasedir();
 		this.outputDirectory = new File(project.getBuild().getDirectory());
 		this.appArchive = appArchive;
 		this.log = log;
+		this.fromJVM = fromJVM;
 	}
 
 	/**

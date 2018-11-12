@@ -101,10 +101,18 @@ public class DockerBuildMojo extends AbstractDockerMojo {
 	private Map<String, String> buildArgs;
 
 	/**
-	 * Sets the type of docker build to run.
+	 * Determine the type of Dockerfile to create.<br>
+	 * Supported values are: liberty, jar, classpath
 	 */
 	@Parameter(property = "dockerizer", defaultValue = "liberty")
 	private String dockerizer;
+
+	/**
+	 * Determine the JVM to use in the FROM line of Dockerfile to create.<br>
+	 * Supported values are: openj9, hotspot, graalvm
+	 */
+	@Parameter(property = "dockerizerJVM", defaultValue = "openj9")
+	private String dockerizerJVM;
 
 	@Override
 	protected void execute(DockerClient dockerClient) throws MojoExecutionException, MojoFailureException {
@@ -174,19 +182,38 @@ public class DockerBuildMojo extends AbstractDockerMojo {
 	}
 
 	private Dockerizer getDockerizer(MavenProject project, File appArchive, Log log) {
+
+		// TODO: This is a bad ugly hack, need a real implementation!
+		// Things to be done:
+		// 1. Probably create an abstraction for the JVM type?
+		// 2. Definitely support more than just Java 8
+		String jvmLevel = project.getProperties().getProperty("java.version", "1.8");
+		if ("1.8".equalsIgnoreCase(jvmLevel)) {
+			log.warn("Right now, boost dockerizer only supports Java 8");
+		}
+
+		// Set default to be openj9
+		String fromJVM = "FROM adoptopenjdk/openjdk8-openj9";
+		if ("graalvm".equalsIgnoreCase(dockerizerJVM)) {
+			fromJVM = "FROM oracle/graalvm-ce:1.0.0-rc9";
+		}
+		if ("hotspot".equalsIgnoreCase(dockerizerJVM)) {
+			fromJVM = "FROM openjdk:8-jdk-alpine";
+		}
+
 		// TODO: Needed future enhancements:
 		// 1. Is it Spring or something else? sense with MavenProjectUtil.findSpringBootVersion(project);
 		// 2. Use OpenJ9 or HotSpot? sense with property boost.docker.jvm
 		if ("jar".equalsIgnoreCase(dockerizer)) {
-			return new DockerizeSpringBootJar(project, appArchive, log);
+			return new DockerizeSpringBootJar(project, appArchive, log, fromJVM);
 		}
 		if ("classpath".equalsIgnoreCase(dockerizer)) {
-			return new DockerizeSpringBootClasspath(project, appArchive, log);
+			return new DockerizeSpringBootClasspath(project, appArchive, log, fromJVM);
 		}
 		// TODO: Maybe don't make the Spring Boot dockerizer default after EE stuff is added
 		// The current property values of 'jar', 'classpath' and 'liberty' are intentionally
 		// generic so that they can be applied irrespective of the project type (Spring vs EE)
-		return new DockerizeLibertySpringBootJar(project, appArchive, log);
+		return new DockerizeLibertySpringBootJar(project, appArchive, log, fromJVM);
 	}
 
 	/**

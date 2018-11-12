@@ -22,8 +22,8 @@ import org.apache.maven.project.MavenProject;
 
 public class DockerizeSpringBootClasspath extends SpringDockerizer {
 
-	public DockerizeSpringBootClasspath(MavenProject project, File appArchive, Log log) {
-		super(project, appArchive, log);
+	public DockerizeSpringBootClasspath(MavenProject project, File appArchive, Log log, String fromJVM) {
+		super(project, appArchive, log, fromJVM);
 	}
 
 	public Map<String, String> getBuildArgs() {
@@ -35,7 +35,7 @@ public class DockerizeSpringBootClasspath extends SpringDockerizer {
 	public List<String> getDockerfileLines() throws MojoExecutionException {
 		ArrayList<String> lines = new ArrayList<>();
 		lines.add(BOOST_GEN);
-		lines.add("FROM adoptopenjdk/openjdk8-openj9");
+		lines.add(fromJVM);
 		lines.add("VOLUME /tmp");
 		lines.add("ARG DEPENDENCY=target/dependency");
 		lines.add("COPY ${DEPENDENCY}/BOOT-INF/lib /app/lib");
