@@ -16,6 +16,8 @@ import java.nio.charset.Charset;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -111,6 +113,16 @@ public abstract class SpringDockerizer extends Dockerizer {
         } catch (IOException e) {
             throw new BoostException("Could not write Spring Boot Dockerfile.", e);
         }
+    }
+
+    @Override
+    public List<String> getDockerIgnoreList() {
+        List<String> lines = new ArrayList<String>();
+        lines.add("*.log");
+        lines.add("target/liberty");
+        lines.add(".gradle/");
+        lines.add("build/wlp");
+        return lines;
     }
 
 }

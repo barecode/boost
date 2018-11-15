@@ -88,14 +88,4 @@ public class DockerizeLibertySpringBootJar extends SpringDockerizer {
         return lines;
     }
 
-    @Override
-    public List<String> getDockerIgnoreList() {
-        List<String> lines = new ArrayList<String>();
-        lines.add("*.log");
-        lines.add("target/liberty");
-        lines.add(".gradle/");
-        lines.add("build/wlp");
-        return lines;
-    }
-
 }
