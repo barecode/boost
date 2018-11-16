@@ -33,7 +33,7 @@ public interface AbstractDockerI {
     }
 
     default public boolean isTagValid(String tag) {
-        return Pattern.matches("[\\w][\\w.-]{0,127}", tag);
+        return (tag != null ? Pattern.matches("[\\w][\\w.-]{0,127}", tag) : false);
     }
 
     default public boolean isRepositoryValid(String repository) {
