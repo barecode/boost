@@ -12,10 +12,6 @@ package io.openliberty.boost.common.docker.dockerizer.spring;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -30,11 +26,12 @@ import io.openliberty.boost.common.utils.BoostUtil;
 import net.wasdev.wlp.common.plugins.util.SpringBootUtil;
 
 public abstract class SpringDockerizer extends Dockerizer {
-    
+
     public final String SPRING_BOOT_VERSION;
     public final DockerParameters params;
 
-    public SpringDockerizer(File projectDirectory, File outputDirectory, File appArchive, String springBootVersion, DockerParameters params, BoostLoggerI log) {
+    public SpringDockerizer(File projectDirectory, File outputDirectory, File appArchive, String springBootVersion,
+            DockerParameters params, BoostLoggerI log) {
         super(projectDirectory, outputDirectory, appArchive, log);
         this.SPRING_BOOT_VERSION = springBootVersion;
         this.params = params;
@@ -51,67 +48,13 @@ public abstract class SpringDockerizer extends Dockerizer {
         if (BoostUtil.isNotNullOrEmpty(SPRING_BOOT_VERSION)) {
             if (SpringBootUtil.isSpringBootUberJar(appArchive)) {
                 BoostUtil.extract(appArchive, projectDirectory, params.getDependencyFolder());
-                String startClass = getSpringStartClass();
-                File dockerFile = createNewDockerFile();
-                if (dockerFile != null) { // File was created
-                    writeSpringBootDockerFile(dockerFile, startClass);
-                }
+                super.createDockerFile();
             } else {
                 throw new BoostException(appArchive.getAbsolutePath() + " file is not an executable archive. "
                         + "The repackage goal of the spring-boot-maven-plugin must be configured to run first in order to create the required executable archive.");
             }
         } else {
             throw new BoostException("Unable to create a Dockerfile because application type is not supported");
-        }
-    }
-    
-    protected String getAppPathString() {
-
-        Path projPath = projectDirectory.toPath();
-        Path outputPath = outputDirectory.toPath();
-
-        // goes from '~/proj/build/lib' to 'build/lib'
-        Path appPath = projPath.relativize(outputPath);
-
-        // On Windows the last line might be 'build\lib'
-        return appPath.toString().replace(File.separatorChar, '/');
-    }
-
-    protected String getSpringStartClass() throws BoostException {
-        try (JarFile jarFile = new JarFile(appArchive)) {
-            Manifest manifest = jarFile.getManifest();
-            if (manifest != null) {
-                Attributes attributes = manifest.getMainAttributes();
-                return attributes.getValue("Start-Class");
-            } else {
-                throw new BoostException(
-                        "Could not get Spring Boot start class due to error getting app manifest.");
-            }
-        } catch (IOException e) {
-            throw new BoostException("Could not get Spring Boot start class due to error opening app archive.",
-                    e);
-        }
-    }
-
-    private File createNewDockerFile() throws BoostException {
-        try {
-            File dockerFile = new File(projectDirectory, "Dockerfile");
-            Files.createFile(dockerFile.toPath());
-            log.info("Creating Dockerfile: " + dockerFile.getAbsolutePath());
-            return dockerFile;
-        } catch (FileAlreadyExistsException e1) {
-            log.warn("Dockerfile already exists");
-            return null;
-        } catch (IOException e2) {
-            throw new BoostException("Could not create Dockerfile.", e2);
-        }
-    }
-
-    private void writeSpringBootDockerFile(File dockerFile, String startClass) throws BoostException {
-        try {
-            Files.write(dockerFile.toPath(), getDockerfileLines(), Charset.forName("UTF-8"));
-        } catch (IOException e) {
-            throw new BoostException("Could not write Spring Boot Dockerfile.", e);
         }
     }
 
@@ -123,6 +66,21 @@ public abstract class SpringDockerizer extends Dockerizer {
         lines.add(".gradle/");
         lines.add("build/wlp");
         return lines;
+    }
+
+    // Utility
+    protected String getSpringStartClass() throws BoostException {
+        try (JarFile jarFile = new JarFile(appArchive)) {
+            Manifest manifest = jarFile.getManifest();
+            if (manifest != null) {
+                Attributes attributes = manifest.getMainAttributes();
+                return attributes.getValue("Start-Class");
+            } else {
+                throw new BoostException("Could not get Spring Boot start class due to error getting app manifest.");
+            }
+        } catch (IOException e) {
+            throw new BoostException("Could not get Spring Boot start class due to error opening app archive.", e);
+        }
     }
 
 }

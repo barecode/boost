@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +78,34 @@ public abstract class Dockerizer {
      *
      * @throws Exception
      */
-    public abstract void createDockerFile() throws BoostException;
+    public void createDockerFile() throws BoostException {
+        File dockerFile = createNewDockerFile();
+        if (dockerFile != null) { // File was created
+            writeSpringBootDockerFile(dockerFile);
+        }
+    }
+
+    private File createNewDockerFile() throws BoostException {
+        try {
+            File dockerFile = new File(projectDirectory, "Dockerfile");
+            Files.createFile(dockerFile.toPath());
+            log.info("Creating Dockerfile: " + dockerFile.getAbsolutePath());
+            return dockerFile;
+        } catch (FileAlreadyExistsException e1) {
+            log.warn("Dockerfile already exists");
+            return null;
+        } catch (IOException e2) {
+            throw new BoostException("Could not create Dockerfile.", e2);
+        }
+    }
+
+    private void writeSpringBootDockerFile(File dockerFile) throws BoostException {
+        try {
+            Files.write(dockerFile.toPath(), getDockerfileLines(), Charset.forName("UTF-8"));
+        } catch (IOException e) {
+            throw new BoostException("Could not write Dockerfile.", e);
+        }
+    }
 
     // Dockerignore methods
 
@@ -144,6 +172,18 @@ public abstract class Dockerizer {
             }
         }
         return false;
+    }
+
+    // Utility
+    protected String getAppPathString() {
+        Path projPath = projectDirectory.toPath();
+        Path outputPath = outputDirectory.toPath();
+
+        // goes from '~/proj/build/lib' to 'build/lib'
+        Path appPath = projPath.relativize(outputPath);
+
+        // On Windows the last line might be 'build\lib'
+        return appPath.toString().replace(File.separatorChar, '/');
     }
 
 }
