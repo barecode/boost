@@ -19,6 +19,7 @@ import java.util.Map;
 import io.openliberty.boost.common.BoostException;
 import io.openliberty.boost.common.BoostLoggerI;
 import io.openliberty.boost.common.docker.DockerParameters;
+import io.openliberty.boost.common.docker.DockerizerConfig;
 
 public class DockerizeLibertySpringBootJar extends SpringDockerizer {
 
@@ -37,7 +38,12 @@ public class DockerizeLibertySpringBootJar extends SpringDockerizer {
         super(projectDirectory, outputDirectory, appArchive, springBootVersion, params, log);
     }
 
-    public Map<String, String> getBuildArgs() {
+    public DockerizeLibertySpringBootJar(DockerizerConfig config, DockerParameters params) {
+		super(config.getProjectDirectory(), config.getOutputDirectory(), config.getAppArchive(),
+				config.getSpringBootVersion(), params, config.getBoostLogger());
+	}
+
+	public Map<String, String> getBuildArgs() {
         Map<String, String> buildArgs = new HashMap<String, String>();
         buildArgs.put("APP_FILE", appArchive.getName());
         return buildArgs;
